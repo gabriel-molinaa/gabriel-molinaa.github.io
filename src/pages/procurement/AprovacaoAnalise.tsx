@@ -19,25 +19,27 @@ import {
   Send,
   FileText,
   Package,
-  MapPin,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests } from '@/src/types/mockData';
+import { getRequestPlanningFlag } from '@/src/lib/procurement';
+import { getPurchaseRequestById } from '@/src/lib/requestStore';
 import { useAuth } from '@/src/context/AuthContext';
 import { UrgencyLevel } from '@/src/types/procurement';
 
 const urgencyColors: Record<UrgencyLevel, string> = {
   'Normal': 'bg-blue-500',
   'Urgente': 'bg-amber-500',
-  'Emergencial': 'bg-red-500'
+  'Emergencial': 'bg-amber-500'
 };
 
 export default function AprovacaoAnalise() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const request = mockRequests.find(r => r.id === id);
+  const request = getPurchaseRequestById(id);
   
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,7 +83,7 @@ export default function AprovacaoAnalise() {
   };
 
   const isApprover = user?.role === 'Gestor/Aprovador' || user?.role === 'Administrador';
-  const totalEstimated = request.items.reduce((acc, item) => acc + (item.estimatedValue * item.quantity), 0);
+  const planningFlag = getRequestPlanningFlag(request);
 
   return (
     <div className="space-y-8 pb-12">
@@ -167,8 +169,7 @@ export default function AprovacaoAnalise() {
                     <tr className="border-b border-gray-100">
                       <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Descrição / Código</th>
                       <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Qtd / Unid</th>
-                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vlr. Unit Est.</th>
-                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Total Est.</th>
+                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atendimento</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -178,35 +179,50 @@ export default function AprovacaoAnalise() {
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-gray-900">{item.description}</span>
                             <span className="text-[10px] text-gray-400 mt-0.5">{item.type} {item.code ? `• Cód: ${item.code}` : ''}</span>
+                            {item.referenceLink && (
+                              <a href={item.referenceLink} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700">
+                                <LinkIcon className="w-3 h-3" /> Referência do produto
+                              </a>
+                            )}
                           </div>
                         </td>
                         <td className="py-4">
                           <span className="text-sm font-medium text-gray-700">{item.quantity} {item.unitOfMeasure}</span>
                         </td>
                         <td className="py-4">
-                          <span className="text-sm font-medium text-gray-700">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue)}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right">
-                          <span className="text-sm font-bold text-gray-900">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue * item.quantity)}
-                          </span>
+                          <div className="space-y-1 text-xs">
+                            <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 font-bold uppercase tracking-wider text-emerald-700">Estoque: {item.stockQuantity ?? 0}</div>
+                            <div className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 font-bold uppercase tracking-wider text-amber-700">Pedido: {item.purchaseQuantity ?? 0}</div>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="border-t border-gray-100">
-                      <td colSpan={3} className="py-4 text-right font-bold text-gray-400 text-xs uppercase">Total Estimado da Solicitação:</td>
-                      <td className="py-4 text-right">
-                        <span className="text-lg font-black text-blue-600">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalEstimated)}
-                        </span>
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
+              </div>
+            </div>
+
+            <div className="h-px bg-gray-100" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Layers className="w-4 h-4" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Atendimento da Solicitação</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 md:col-span-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Classificação</p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <span className={cn(
+                      'inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider',
+                      planningFlag === 'Estoque' ? 'bg-emerald-100 text-emerald-700' : planningFlag === 'Compra' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                    )}>
+                      {planningFlag === 'Compra' ? 'Pedido de compra' : planningFlag}
+                    </span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Estoque: {request.items.reduce((total, item) => total + (item.stockQuantity ?? 0), 0)}</span>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">Compra: {request.items.reduce((total, item) => total + (item.purchaseQuantity ?? 0), 0)}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -229,7 +245,7 @@ export default function AprovacaoAnalise() {
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Grau de Urgência</p>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <span className={cn("w-3 h-3 rounded-full", urgencyColors[request.urgency])} />
-                    <span className="text-sm font-bold text-gray-900">{request.urgency}</span>
+                    <span className="text-sm font-bold text-gray-900">{request.urgency === 'Emergencial' ? 'Urgente' : request.urgency}</span>
                   </div>
                 </div>
               </div>
@@ -399,6 +415,10 @@ export default function AprovacaoAnalise() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Setor / Serviço</p>
                 <p className="text-xs font-medium text-gray-700 mt-0.5">{request.sector}</p>
               </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Número da Sala</p>
+                <p className="text-xs font-medium text-gray-700 mt-0.5">{request.roomNumber || 'Não informado'}</p>
+              </div>
             </div>
           </div>
 
@@ -435,25 +455,47 @@ export default function AprovacaoAnalise() {
           </div>
 
           {/* Delivery Info */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-             <div className="flex items-center gap-2 text-blue-600">
-                <MapPin className="w-4 h-4" />
-                <h3 className="text-xs font-bold uppercase tracking-wider">Logística</h3>
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Layers className="w-4 h-4" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Planejamento</h3>
               </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Locais de Entrega</p>
-                  <div className="mt-2 space-y-2">
-                    {Array.from(new Set(request.items.map(i => i.deliveryLocation))).map((loc, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[10px] text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                        <ChevronRight className="w-3 h-3 text-gray-300" />
-                        {loc || 'A definir'}
-                      </div>
-                    ))}
-                  </div>
+              <div className="space-y-2 text-[10px] text-gray-600">
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  {planningFlag === 'Compra' ? 'Pedido de compra' : planningFlag}
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  Estoque: {request.items.reduce((total, item) => total + (item.stockQuantity ?? 0), 0)}
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  Pedido de compra: {request.items.reduce((total, item) => total + (item.purchaseQuantity ?? 0), 0)}
                 </div>
               </div>
-          </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Layers className="w-4 h-4" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Planejamento</h3>
+              </div>
+              <div className="space-y-2 text-[10px] text-gray-600">
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  {planningFlag === 'Compra' ? 'Pedido de compra' : planningFlag}
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  Estoque: {request.items.reduce((total, item) => total + (item.stockQuantity ?? 0), 0)}
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <ChevronRight className="w-3 h-3 text-gray-300" />
+                  Pedido de compra: {request.items.reduce((total, item) => total + (item.purchaseQuantity ?? 0), 0)}
+                </div>
+              </div>
+            </div>
         </div>
       </div>
     </div>

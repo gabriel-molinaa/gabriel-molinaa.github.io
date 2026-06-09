@@ -20,12 +20,14 @@ import {
   History,
   Printer,
   Download,
+  Layers,
+  Link as LinkIcon,
   Share2,
-  MapPin,
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests } from '@/src/types/mockData';
+import { getRequestPlanningFlag } from '@/src/lib/procurement';
+import { getPurchaseRequestById } from '@/src/lib/requestStore';
 import { RequestStatus, UrgencyLevel } from '@/src/types/procurement';
 
 const statusColors: Record<RequestStatus, string> = {
@@ -59,7 +61,7 @@ const urgencyColors: Record<UrgencyLevel, string> = {
 export default function SolicitacaoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const request = mockRequests.find(r => r.id === id);
+  const request = getPurchaseRequestById(id);
 
   if (!request) {
     return (
@@ -84,7 +86,7 @@ export default function SolicitacaoDetalhe() {
   }
 
   const StatusIcon = statusIcons[request.status];
-  const totalEstimated = request.items.reduce((acc, item) => acc + (item.estimatedValue * item.quantity), 0);
+  const planningFlag = getRequestPlanningFlag(request);
 
   return (
     <div className="space-y-8 pb-12">
@@ -108,7 +110,7 @@ export default function SolicitacaoDetalhe() {
                 {request.status}
               </span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">Solicitação de compra para {request.unit} - {request.sector}</p>
+            <p className="text-sm text-gray-500 mt-1">Solicitação de compra para {request.unit} - {request.sector}{request.roomNumber ? ` - ${request.roomNumber}` : ''}</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -120,7 +122,7 @@ export default function SolicitacaoDetalhe() {
           </button>
           <div className="w-px h-10 bg-gray-200 mx-1" />
           {request.status === 'Rascunho' || request.status === 'Retornada para ajuste' ? (
-            <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+            <button onClick={() => navigate(`/solicitacoes/nova?edit=${request.id}`)} className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
               Editar Solicitação
             </button>
           ) : (
@@ -192,8 +194,7 @@ export default function SolicitacaoDetalhe() {
                     <tr className="border-b border-gray-100">
                       <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Descrição / Código</th>
                       <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Qtd / Unid</th>
-                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vlr. Unit Est.</th>
-                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Total Est.</th>
+                      <th className="py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atendimento</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -203,35 +204,70 @@ export default function SolicitacaoDetalhe() {
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-gray-900">{item.description}</span>
                             <span className="text-[10px] text-gray-400 mt-0.5">{item.type} {item.code ? `• Cód: ${item.code}` : ''}</span>
+                            {item.referenceLink && (
+                              <a href={item.referenceLink} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700">
+                                <LinkIcon className="w-3 h-3" /> Referência do produto
+                              </a>
+                            )}
                           </div>
                         </td>
                         <td className="py-4">
                           <span className="text-sm font-medium text-gray-700">{item.quantity} {item.unitOfMeasure}</span>
                         </td>
                         <td className="py-4">
-                          <span className="text-sm font-medium text-gray-700">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue)}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right">
-                          <span className="text-sm font-bold text-gray-900">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue * item.quantity)}
-                          </span>
+                          <div className="space-y-1 text-xs">
+                            <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 font-bold uppercase tracking-wider text-emerald-700">Estoque: {item.stockQuantity ?? 0}</div>
+                            <div className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 font-bold uppercase tracking-wider text-amber-700">Pedido: {item.purchaseQuantity ?? 0}</div>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="border-t border-gray-100">
-                      <td colSpan={3} className="py-4 text-right font-bold text-gray-400 text-xs uppercase">Total Estimado da Solicitação:</td>
-                      <td className="py-4 text-right">
-                        <span className="text-lg font-black text-blue-600">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalEstimated)}
-                        </span>
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
+              </div>
+            </div>
+
+            <div className="h-px bg-gray-100" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Layers className="w-4 h-4" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Atendimento da Solicitação</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 md:col-span-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Classificação</p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <span className={cn(
+                      'inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider',
+                      planningFlag === 'Estoque' ? 'bg-emerald-100 text-emerald-700' : planningFlag === 'Compra' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                    )}>
+                      {planningFlag === 'Compra' ? 'Pedido de compra' : planningFlag}
+                    </span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Estoque: {request.items.reduce((total, item) => total + (item.stockQuantity ?? 0), 0)}</span>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">Compra: {request.items.reduce((total, item) => total + (item.purchaseQuantity ?? 0), 0)}</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Atendidos por estoque</p>
+                  <div className="mt-3 space-y-2 text-xs text-gray-700">
+                    {request.items.some((item) => (item.stockQuantity ?? 0) > 0)
+                      ? request.items.filter((item) => (item.stockQuantity ?? 0) > 0).map((item) => (
+                          <div key={`stock-${item.id}`}><span className="font-bold text-gray-900">{item.description}</span> • {item.stockQuantity} {item.unitOfMeasure}</div>
+                        ))
+                      : <p className="text-gray-400">Nenhum item atendido pelo estoque.</p>}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 md:col-span-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Itens para pedido de compra</p>
+                  <div className="mt-3 space-y-2 text-xs text-gray-700">
+                    {request.items.some((item) => (item.purchaseQuantity ?? 0) > 0)
+                      ? request.items.filter((item) => (item.purchaseQuantity ?? 0) > 0).map((item) => (
+                          <div key={`purchase-${item.id}`}><span className="font-bold text-gray-900">{item.description}</span> • {item.purchaseQuantity} {item.unitOfMeasure}</div>
+                        ))
+                      : <p className="text-gray-400">Todos os itens podem ser atendidos pelo estoque.</p>}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -254,7 +290,7 @@ export default function SolicitacaoDetalhe() {
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Grau de Urgência</p>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <span className={cn("w-3 h-3 rounded-full", urgencyColors[request.urgency])} />
-                    <span className="text-sm font-bold text-gray-900">{request.urgency}</span>
+                    <span className="text-sm font-bold text-gray-900">{request.urgency === 'Emergencial' ? 'Urgente' : request.urgency}</span>
                   </div>
                 </div>
               </div>
@@ -332,25 +368,35 @@ export default function SolicitacaoDetalhe() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Setor / Serviço</p>
                 <p className="text-xs font-medium text-gray-700 mt-0.5">{request.sector}</p>
               </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Número da Sala</p>
+                <p className="text-xs font-medium text-gray-700 mt-0.5">{request.roomNumber || 'Não informado'}</p>
+              </div>
             </div>
           </div>
 
-          {/* Delivery Info */}
+          {/* Planning Info */}
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
              <div className="flex items-center gap-2 text-blue-600">
-                <MapPin className="w-4 h-4" />
-                <h3 className="text-xs font-bold uppercase tracking-wider">Logística</h3>
+                <Layers className="w-4 h-4" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Planejamento</h3>
               </div>
               <div className="space-y-3">
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Locais de Entrega</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resumo</p>
                   <div className="mt-2 space-y-2">
-                    {Array.from(new Set(request.items.map(i => i.deliveryLocation))).map((loc, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[10px] text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                        <ChevronRight className="w-3 h-3 text-gray-300" />
-                        {loc || 'A definir'}
-                      </div>
-                    ))}
+                    <div className="flex items-center gap-2 text-[10px] text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                      <ChevronRight className="w-3 h-3 text-gray-300" />
+                      {planningFlag === 'Compra' ? 'Pedido de compra' : planningFlag}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                      <ChevronRight className="w-3 h-3 text-gray-300" />
+                      Estoque: {request.items.reduce((total, item) => total + (item.stockQuantity ?? 0), 0)}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                      <ChevronRight className="w-3 h-3 text-gray-300" />
+                      Pedido de compra: {request.items.reduce((total, item) => total + (item.purchaseQuantity ?? 0), 0)}
+                    </div>
                   </div>
                 </div>
               </div>

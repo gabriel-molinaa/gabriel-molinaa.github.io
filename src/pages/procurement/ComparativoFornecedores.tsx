@@ -17,12 +17,13 @@ import {
   Info
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests, mockQuotations } from '@/src/types/mockData';
+import { getPurchaseRequestById } from '@/src/lib/requestStore';
+import { mockQuotations } from '@/src/types/mockData';
 
 export default function ComparativoFornecedores() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const request = mockRequests.find(r => r.id === id);
+  const request = getPurchaseRequestById(id);
   const quotation = mockQuotations[0]; // Mocking a quotation for the demo
   
   const [winnerId, setWinnerId] = useState<string | null>(quotation.suppliers.find(s => s.isWinner)?.id || null);
@@ -166,7 +167,7 @@ export default function ComparativoFornecedores() {
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
               <Info className="w-5 h-5 text-amber-600 flex-shrink-0" />
               <p className="text-[10px] text-amber-700 leading-relaxed">
-                Ao confirmar, o sistema gerará o Pedido de Compra e notificará o fornecedor vencedor.
+                Ao confirmar, o sistema gerará o Pedido de Compra e registrará o contato com o fornecedor vencedor.
               </p>
             </div>
 

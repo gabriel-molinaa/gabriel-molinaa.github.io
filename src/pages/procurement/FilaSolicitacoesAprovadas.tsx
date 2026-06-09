@@ -15,13 +15,14 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests } from '@/src/types/mockData';
+import { getPurchaseRequests } from '@/src/lib/requestStore';
 
 export default function FilaSolicitacoesAprovadas() {
   const navigate = useNavigate();
+  const requests = getPurchaseRequests();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const approvedRequests = mockRequests.filter(req => 
+  const approvedRequests = requests.filter(req => 
     req.status === 'Aprovada' &&
     (req.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
      req.items.some(item => item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -100,11 +101,9 @@ export default function FilaSolicitacoesAprovadas() {
                       <div className="flex items-center gap-1.5">
                         <span className={cn(
                           "w-2 h-2 rounded-full",
-                          req.urgency === 'Emergencial' ? "bg-red-500" :
-                          req.urgency === 'Urgente' ? "bg-amber-500" :
-                          req.urgency === 'Normal' ? "bg-blue-500" : "bg-gray-300"
+                          req.urgency === 'Urgente' || req.urgency === 'Emergencial' ? "bg-amber-500" : "bg-blue-500"
                         )} />
-                        <span className="text-xs font-medium text-gray-700">{req.urgency}</span>
+                        <span className="text-xs font-medium text-gray-700">{req.urgency === 'Emergencial' ? 'Urgente' : req.urgency}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

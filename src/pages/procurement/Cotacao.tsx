@@ -20,19 +20,22 @@ import {
   Send
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests } from '@/src/types/mockData';
+import { getPurchaseRequestById } from '@/src/lib/requestStore';
+import { ContactChannel } from '@/src/types/procurement';
+
+const contactChannels: ContactChannel[] = ['WhatsApp', 'E-mail', 'Telefone', 'Presencial', 'Outro'];
 
 export default function Cotacao() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const request = mockRequests.find(r => r.id === id);
+  const request = getPurchaseRequestById(id);
   
   const [suppliers, setSuppliers] = useState([
-    { id: '1', name: '', unitPrice: 0, deliveryTime: '', paymentTerms: '', technicalCompliance: true }
+    { id: '1', name: '', unitPrice: 0, deliveryTime: '', paymentTerms: '', technicalCompliance: true, contactChannel: 'WhatsApp' as ContactChannel, contactDetail: '', contactNotes: '' }
   ]);
 
   const addSupplier = () => {
-    setSuppliers([...suppliers, { id: Date.now().toString(), name: '', unitPrice: 0, deliveryTime: '', paymentTerms: '', technicalCompliance: true }]);
+    setSuppliers([...suppliers, { id: Date.now().toString(), name: '', unitPrice: 0, deliveryTime: '', paymentTerms: '', technicalCompliance: true, contactChannel: 'WhatsApp' as ContactChannel, contactDetail: '', contactNotes: '' }]);
   };
 
   const removeSupplier = (id: string) => {
@@ -111,6 +114,28 @@ export default function Cotacao() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Canal de Contato</label>
+                    <div className="relative">
+                      <select
+                        value={supplier.contactChannel}
+                        onChange={(e) => updateSupplier(supplier.id, 'contactChannel', e.target.value as ContactChannel)}
+                        className="w-full appearance-none px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                      >
+                        {contactChannels.map((channel) => <option key={channel} value={channel}>{channel}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contato Utilizado</label>
+                    <input
+                      type="text"
+                      value={supplier.contactDetail}
+                      onChange={(e) => updateSupplier(supplier.id, 'contactDetail', e.target.value)}
+                      placeholder="Ex: (47) 99999-0000 ou compras@fornecedor.com"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
                       <Clock className="w-3 h-3" /> Prazo de Entrega
                     </label>
@@ -159,6 +184,16 @@ export default function Cotacao() {
                       </label>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Observação do Contato</label>
+                  <textarea
+                    value={supplier.contactNotes}
+                    onChange={(e) => updateSupplier(supplier.id, 'contactNotes', e.target.value)}
+                    placeholder="Registre como o contato foi feito, retorno do fornecedor ou próximos passos..."
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all min-h-[96px]"
+                  />
                 </div>
               </div>
             </div>

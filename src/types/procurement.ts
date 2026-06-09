@@ -10,6 +10,8 @@ export type RequestStatus =
 
 export type UrgencyLevel = 'Normal' | 'Urgente' | 'Emergencial';
 
+export type ContactChannel = 'WhatsApp' | 'E-mail' | 'Telefone' | 'Presencial' | 'Outro';
+
 export type PurchaseType = 'Material de Consumo' | 'Estoque' | 'Ativo Imobilizado' | 'Serviço';
 
 export interface PurchaseRequestItem {
@@ -19,9 +21,12 @@ export interface PurchaseRequestItem {
   description: string;
   quantity: number;
   unitOfMeasure: string;
-  estimatedValue: number;
+  estimatedValue?: number;
   expectedDate: string;
-  deliveryLocation: string;
+  deliveryLocation?: string;
+  referenceLink?: string;
+  stockQuantity?: number;
+  purchaseQuantity?: number;
 }
 
 export interface PurchaseRequest {
@@ -30,6 +35,7 @@ export interface PurchaseRequest {
   requester: string;
   unit: string;
   sector: string;
+  roomNumber?: string;
   project: string;
   costCenter: string;
   agreement?: string;
@@ -56,6 +62,9 @@ export interface SupplierQuotation {
   deliveryTime: string;
   paymentTerms: string;
   technicalCompliance: boolean;
+  contactChannel?: ContactChannel;
+  contactDetail?: string;
+  contactNotes?: string;
   isWinner?: boolean;
   justification?: string;
 }
@@ -168,7 +177,9 @@ export interface Supplier {
   rating: number;
   status: 'Ativo' | 'Inativo' | 'Bloqueado';
   contact: string;
-  email: string;
+  email?: string;
+  phone?: string;
+  preferredContactChannel?: ContactChannel;
 }
 
 export interface ItemMaster {

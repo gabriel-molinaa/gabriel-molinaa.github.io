@@ -25,6 +25,7 @@ export const mockRequests: PurchaseRequest[] = [
     requester: 'Ana Silva',
     unit: 'Matriz',
     sector: 'Administrativo',
+    roomNumber: 'Sala 12',
     project: 'Projeto Inclusão Digital',
     costCenter: 'CC-102 (Informática)',
     agreement: 'Convênio Municipal 452/2025',
@@ -35,13 +36,14 @@ export const mockRequests: PurchaseRequest[] = [
       {
         id: '1',
         type: 'Material de Consumo',
-        code: 'MAT-001',
-        description: '10 resmas de papel A4 75g',
+        code: 'ITM-001',
+        description: 'Papel A4 Branco 75g',
         quantity: 10,
         unitOfMeasure: 'Resma',
         estimatedValue: 300.00,
         expectedDate: '10/04/2026',
-        deliveryLocation: 'Almoxarifado Central'
+        deliveryLocation: 'Almoxarifado Central',
+        referenceLink: 'https://papelaria.example.com/papel-a4-75g'
       }
     ],
     justification: 'Necessidade de reposição de estoque para o setor administrativo.',
@@ -57,6 +59,7 @@ export const mockRequests: PurchaseRequest[] = [
     requester: 'Carlos Santos',
     unit: 'Matriz',
     sector: 'Manutenção',
+    roomNumber: 'Sala Técnica',
     project: 'Manutenção Predial',
     costCenter: 'CC-205 (Infraestrutura)',
     items: [
@@ -86,6 +89,7 @@ export const mockRequests: PurchaseRequest[] = [
     requester: 'Maria Oliveira',
     unit: 'Unidade 2',
     sector: 'Cozinha',
+    roomNumber: 'Copa 01',
     project: 'Projeto Alimentação Saudável',
     costCenter: 'CC-301 (Nutrição)',
     agreement: 'Convênio Estadual 123/2024',
@@ -99,7 +103,8 @@ export const mockRequests: PurchaseRequest[] = [
         unitOfMeasure: 'Pacote',
         estimatedValue: 600.00,
         expectedDate: '03/04/2026',
-        deliveryLocation: 'Cozinha Unidade 2'
+        deliveryLocation: 'Cozinha Unidade 2',
+        referenceLink: 'https://mercado.example.com/arroz-5kg'
       },
       {
         id: '2',
@@ -114,7 +119,7 @@ export const mockRequests: PurchaseRequest[] = [
       }
     ],
     justification: 'Abastecimento mensal da unidade leste.',
-    urgency: 'Emergencial',
+    urgency: 'Urgente',
     status: 'Em cotação',
     history: [
       { date: '30/03/2026 08:00', user: 'Maria Oliveira', action: 'Solicitação Enviada' },
@@ -138,6 +143,9 @@ export const mockQuotations = [
         deliveryTime: '3 dias',
         paymentTerms: '30 dias',
         technicalCompliance: true,
+        contactChannel: 'WhatsApp',
+        contactDetail: '(47) 99999-1000',
+        contactNotes: 'Contato inicial registrado pelo setor de compras.',
         isWinner: true,
         justification: 'Melhor preço e prazo de entrega.'
       },
@@ -149,6 +157,8 @@ export const mockQuotations = [
         deliveryTime: '5 dias',
         paymentTerms: '15 dias',
         technicalCompliance: true,
+        contactChannel: 'E-mail',
+        contactDetail: 'cotacoes@mercadoatacadista.com.br',
         isWinner: false
       },
       {
@@ -159,6 +169,8 @@ export const mockQuotations = [
         deliveryTime: '2 dias',
         paymentTerms: 'À vista',
         technicalCompliance: true,
+        contactChannel: 'Telefone',
+        contactDetail: '(47) 3333-2020',
         isWinner: false
       }
     ]
@@ -385,6 +397,30 @@ export const mockStockItems: StockItem[] = [
       { unit: 'Matriz', balance: 150, minStock: 50, status: 'Normal' },
       { unit: 'Unidade 2', balance: 12, minStock: 20, status: 'Baixo' },
       { unit: 'Unidade 3', balance: 0, minStock: 10, status: 'Sem saldo' }
+    ]
+  },
+  {
+    id: 'ALM-010',
+    description: 'Arroz agulhinha tipo 1 (5kg)',
+    type: 'Material de Consumo',
+    category: 'Alimentos',
+    unit: 'Pacote',
+    status: 'Ativo',
+    balances: [
+      { unit: 'Matriz', balance: 18, minStock: 8, status: 'Normal' },
+      { unit: 'Unidade 2', balance: 4, minStock: 10, status: 'Baixo' }
+    ]
+  },
+  {
+    id: 'ALM-015',
+    description: 'Feijão carioca (1kg)',
+    type: 'Material de Consumo',
+    category: 'Alimentos',
+    unit: 'Pacote',
+    status: 'Ativo',
+    balances: [
+      { unit: 'Matriz', balance: 30, minStock: 10, status: 'Normal' },
+      { unit: 'Unidade 2', balance: 0, minStock: 8, status: 'Sem saldo' }
     ]
   },
   {

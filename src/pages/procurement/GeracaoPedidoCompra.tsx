@@ -19,7 +19,8 @@ import {
   Download
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests, mockPurchaseOrders } from '@/src/types/mockData';
+import { getPurchaseRequestById } from '@/src/lib/requestStore';
+import { mockPurchaseOrders } from '@/src/types/mockData';
 
 export default function GeracaoPedidoCompra() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function GeracaoPedidoCompra() {
   const [isGenerated, setIsGenerated] = useState(false);
   
   const order = mockPurchaseOrders[0]; // Mocking an order for the demo
-  const request = mockRequests.find(r => r.id === order.requests[0]);
+  const request = getPurchaseRequestById(order.requests[0]);
 
   const handleGenerate = () => {
     setIsSubmitting(true);
@@ -123,7 +124,7 @@ export default function GeracaoPedidoCompra() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {request.items.map((item, idx) => (
+                      {order.items.map((item, idx) => (
                         <tr key={idx}>
                           <td className="px-4 py-3">
                             <p className="text-xs font-bold text-gray-900">{request.budgetCategory}</p>
@@ -131,10 +132,10 @@ export default function GeracaoPedidoCompra() {
                           </td>
                           <td className="px-4 py-3 text-center text-xs font-bold text-gray-900">{item.quantity}</td>
                           <td className="px-4 py-3 text-right text-xs font-bold text-gray-900">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue)}
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.unitPrice)}
                           </td>
                           <td className="px-4 py-3 text-right text-xs font-bold text-gray-900">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.estimatedValue * item.quantity)}
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.unitPrice * item.quantity)}
                           </td>
                         </tr>
                       ))}
@@ -143,7 +144,7 @@ export default function GeracaoPedidoCompra() {
                       <tr className="bg-gray-50/50">
                         <td colSpan={3} className="px-4 py-3 text-right text-[10px] font-bold text-gray-400 uppercase">Total do Pedido:</td>
                         <td className="px-4 py-3 text-right text-xs font-black text-blue-600">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(request.items.reduce((acc, item) => acc + (item.estimatedValue * item.quantity), 0))}
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0))}
                         </td>
                       </tr>
                     </tfoot>
@@ -166,7 +167,7 @@ export default function GeracaoPedidoCompra() {
               <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl flex gap-3">
                 <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <p className="text-[10px] text-blue-700 leading-relaxed">
-                  Ao emitir o pedido, ele será enviado automaticamente para o e-mail do fornecedor e ficará disponível para o setor de recebimento.
+                  Ao emitir o pedido, ele ficará disponível para o setor de recebimento e permitirá registrar o canal de contato utilizado com o fornecedor.
                 </p>
               </div>
 
@@ -200,7 +201,7 @@ export default function GeracaoPedidoCompra() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Pedido Emitido com Sucesso!</h1>
             <p className="text-gray-500 max-w-md mx-auto">
-              O pedido <strong>{order.id}</strong> foi enviado ao fornecedor e registrado no sistema para acompanhamento.
+              O pedido <strong>{order.id}</strong> foi registrado no sistema para acompanhamento e contato com o fornecedor.
             </p>
           </div>
           <div className="flex gap-4">

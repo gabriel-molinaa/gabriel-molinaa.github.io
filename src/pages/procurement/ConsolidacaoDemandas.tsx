@@ -16,17 +16,18 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { mockRequests } from '@/src/types/mockData';
+import { getPurchaseRequests } from '@/src/lib/requestStore';
 
 export default function ConsolidacaoDemandas() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const mainRequest = mockRequests.find(r => r.id === id);
+  const requests = getPurchaseRequests();
+  const mainRequest = requests.find(r => r.id === id);
   
   // Mocking similar requests for consolidation
   const [selectedRequests, setSelectedRequests] = useState([mainRequest].filter(Boolean));
   const [availableRequests, setAvailableRequests] = useState(
-    mockRequests.filter(r => r.id !== id && r.status === 'Aprovada' && r.budgetCategory === mainRequest?.budgetCategory)
+    requests.filter(r => r.id !== id && r.status === 'Aprovada' && r.budgetCategory === mainRequest?.budgetCategory)
   );
 
   const handleAdd = (req: any) => {
